@@ -18,7 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Colorpicker dialog
 """
-
+# 2022_07_17 added a 'pt' translation and made some minor ajustments 
+#            to the labels for use with thonny-py5mode plugin (@villares)
 
 from PIL import ImageTk
 from .functions import tk, ttk, round2, create_checkered_image, \
@@ -33,19 +34,33 @@ import re
 
 
 # --- Translation
-EN = {}
-FR = {"Red": "Rouge", "Green": "Vert", "Blue": "Bleu",
+interface_texts = {
+    'en': {
+        # 'en' can be empty, in the absense of a key, the key itself is used
+        #  Being used here to customize Juliette's original interface
+        "HTML": "Hex Notation",
+        "OK": "Copy Hex Notation & Close",
+    },
+    'fr': {
+      "Red": "Rouge", "Green": "Vert", "Blue": "Bleu",
       "Hue": "Teinte", "Saturation": "Saturation", "Value": "Valeur",
       "Cancel": "Annuler", "Color Chooser": "Sélecteur de couleur",
-      "Alpha": "Alpha"}
-
+      "Alpha": "Alpha", "HTML": "Notation hexadécimale",
+      "OK": "Copier notation hexadécimale",
+    },
+    'pt': {
+      "Red": "Vermelho", "Green": "Verde", "Blue": "Azul",
+      "Hue": "Matiz", "Saturation": "Saturação", "Value": "Valor",
+      "Cancel": "Cancelar", "Color Chooser": "Sélecteur de couleur",
+      "Alpha": "Alpha", "HTML": "Notação hexadecimal",
+      "OK": "Copiar notação hexa e fechar",
+    },
+}
 try:
-    if getdefaultlocale()[0][:2] == 'fr':
-        TR = FR
-    else:
-        TR = EN
+    loc = getdefaultlocale()[0][:2]
 except (TypeError, ValueError):
-    TR = EN
+    loc = 'en'
+TR = interface_texts.get(loc, interface_texts['en'])
 
 
 def _(text):
@@ -239,7 +254,7 @@ class ColorPicker(tk.Toplevel):
         hexa_frame.pack(fill="x")
         self.hexa = ttk.Entry(hexa_frame, justify="center", width=10, name='entry')
         self.hexa.insert(0, old_color.upper())
-        ttk.Label(hexa_frame, text="HTML").pack(side="left", padx=4, pady=(4, 1))
+        ttk.Label(hexa_frame, text=_("HTML")).pack(side="left", padx=4, pady=(4, 1))
         self.hexa.pack(side="left", padx=6, pady=(4, 1), fill='x', expand=True)
 
         # --- alpha
@@ -262,7 +277,7 @@ class ColorPicker(tk.Toplevel):
 
         # --- validation
         button_frame = ttk.Frame(self)
-        ttk.Button(button_frame, text="Ok",
+        ttk.Button(button_frame, text=_("OK"), width=25,
                    command=self.ok).pack(side="right", padx=10)
         ttk.Button(button_frame, text=_("Cancel"),
                    command=self.destroy).pack(side="right", padx=10)
@@ -315,7 +330,7 @@ class ColorPicker(tk.Toplevel):
         self.hexa.focus_set()
         self.wait_visibility()
         self.lift()
-        self.grab_set()
+        #self.grab_set()
 
     def get_color(self):
         """Return selected color, return an empty string if no color is selected."""
