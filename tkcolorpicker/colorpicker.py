@@ -315,7 +315,7 @@ class ColorPicker(tk.Toplevel):
         self.hexa.focus_set()
         self.wait_visibility()
         self.lift()
-        self.grab_set()
+        #self.grab_set()  # run 'modeless' so one can leave the colorpicker open
 
     def get_color(self):
         """Return selected color, return an empty string if no color is selected."""
