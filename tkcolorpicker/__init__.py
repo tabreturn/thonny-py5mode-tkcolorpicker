@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-from .colorpicker import ColorPicker, askcolor
+from .colorpicker import ColorPicker, askcolor, modeless_colorpicker
 from .alphabar import AlphaBar
 from .gradientbar import GradientBar
 from .colorsquare import ColorSquare
