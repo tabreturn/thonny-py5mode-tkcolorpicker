@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Colorpicker dialog
 """
-# 2022_07_17 added a 'pt' translation and made some minor ajustments 
+# 2022_07_17 added a 'pt' translation and made some minor ajustments
 #            to the labels for use with thonny-py5mode plugin (@villares)
 
 from PIL import ImageTk
@@ -354,7 +354,8 @@ class ColorPicker(tk.Toplevel):
         self.hexa.focus_set()
         self.wait_visibility()
         self.lift()
-        self.grab_set()
+        if not self.modeless:
+            self.grab_set()
 
     def get_color(self):
         """Return selected color, return an empty string if no color is selected."""
