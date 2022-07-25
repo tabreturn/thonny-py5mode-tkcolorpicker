@@ -354,8 +354,7 @@ class ColorPicker(tk.Toplevel):
         self.hexa.focus_set()
         self.wait_visibility()
         self.lift()
-        if not self.modeless:
-            self.grab_set()
+        self.grab_set()
 
     def get_color(self):
         """Return selected color, return an empty string if no color is selected."""
