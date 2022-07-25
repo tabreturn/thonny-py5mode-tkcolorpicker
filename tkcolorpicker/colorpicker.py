@@ -18,7 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Colorpicker dialog
 """
-
+# 2022_07_17 added a 'pt' translation and made some minor ajustments 
+#            to the labels for use with thonny-py5mode plugin (@villares)
 
 from PIL import ImageTk
 from .functions import tk, ttk, round2, create_checkered_image, \
@@ -30,22 +31,45 @@ from .spinbox import Spinbox
 from .limitvar import LimitVar
 from locale import getdefaultlocale
 import re
+import pyperclip
 
 
 # --- Translation
-EN = {}
-FR = {"Red": "Rouge", "Green": "Vert", "Blue": "Bleu",
+interface_texts = {
+    'en': {
+        # 'en' can be empty, in the absense of a key, the key itself is used
+        #  Being used here to customize Juliette's original interface
+        "HTML": "Hex Notation",
+        "OK": "Select",
+        "Copy Hex": "Copy Hex Notation",
+        "Copy RGB": "Copy red, green, blue",
+    },
+    'fr': {
+      "Red": "Rouge", "Green": "Vert", "Blue": "Bleu",
       "Hue": "Teinte", "Saturation": "Saturation", "Value": "Valeur",
       "Cancel": "Annuler", "Color Chooser": "Sélecteur de couleur",
-      "Alpha": "Alpha"}
-
+      "Close": "Fermer",
+      "Alpha": "Alpha", "HTML": "Notation hexadécimale",
+      "OK": "Selectioner",
+      "Copy Hex": "Copier notation hexadécimale",
+      "Copy RGB": "Copier rouge, vert, bleu",
+    },
+    'pt': {
+      "Red": "Vermelho", "Green": "Verde", "Blue": "Azul",
+      "Hue": "Matiz", "Saturation": "Saturação", "Value": "Valor",
+      "Cancel": "Cancelar", "Color Chooser": "Sélecteur de couleur",
+      "Close": "Fechar",
+      "Alpha": "Alpha", "HTML": "Notação hexadecimal",
+      "OK": "Selecionar",
+      "Copy Hex": "Copiar notação hexa",
+      "Copy RGB": "Copiar vermelho, verde, azul",
+    },
+}
 try:
-    if getdefaultlocale()[0][:2] == 'fr':
-        TR = FR
-    else:
-        TR = EN
+    loc = getdefaultlocale()[0][:2]
 except (TypeError, ValueError):
-    TR = EN
+    loc = 'en'
+TR = interface_texts.get(loc, interface_texts['en'])
 
 
 def _(text):
@@ -56,8 +80,12 @@ def _(text):
 class ColorPicker(tk.Toplevel):
     """Color picker dialog."""
 
-    def __init__(self, parent=None, color=(255, 0, 0), alpha=False,
-                 title=_("Color Chooser")):
+    def __init__(self,
+                 parent=None,
+                 color=(255, 0, 0),
+                 alpha=False,
+                 title=_("Color Chooser"),
+                 modeless=False):
         """
         Create a ColorPicker dialog.
 
@@ -66,6 +94,9 @@ class ColorPicker(tk.Toplevel):
             * color: initially selected color in rgb or hexa format
             * alpha: alpha channel support (boolean)
             * title: dialog title
+            * modeless: Won't grab_set(), no OK button, Cancel is named Close
+                        buttons to to copy color as hex notation or 'r, g, b'
+                        that won't close window. Always returns None.
         """
         tk.Toplevel.__init__(self, parent)
 
@@ -73,6 +104,7 @@ class ColorPicker(tk.Toplevel):
         self.transient(self.master)
         self.resizable(False, False)
         self.rowconfigure(1, weight=1)
+        self.modeless = modeless
 
         self.color = ""
         self.alpha_channel = bool(alpha)
@@ -239,7 +271,7 @@ class ColorPicker(tk.Toplevel):
         hexa_frame.pack(fill="x")
         self.hexa = ttk.Entry(hexa_frame, justify="center", width=10, name='entry')
         self.hexa.insert(0, old_color.upper())
-        ttk.Label(hexa_frame, text="HTML").pack(side="left", padx=4, pady=(4, 1))
+        ttk.Label(hexa_frame, text=_("HTML")).pack(side="left", padx=4, pady=(4, 1))
         self.hexa.pack(side="left", padx=6, pady=(4, 1), fill='x', expand=True)
 
         # --- alpha
@@ -262,11 +294,18 @@ class ColorPicker(tk.Toplevel):
 
         # --- validation
         button_frame = ttk.Frame(self)
-        ttk.Button(button_frame, text="Ok",
-                   command=self.ok).pack(side="right", padx=10)
-        ttk.Button(button_frame, text=_("Cancel"),
-                   command=self.destroy).pack(side="right", padx=10)
-
+        if not self.modeless:
+            ttk.Button(button_frame, text=_("OK"), width=25,
+                       command=self.ok).pack(side="right", padx=10)
+            ttk.Button(button_frame, text=_("Cancel"),
+                       command=self.destroy).pack(side="right", padx=10)
+        else:
+            ttk.Button(button_frame, text=_("Copy Hex"), width=25,
+                       command=self.copy_hex).pack(side="right", padx=10)
+            ttk.Button(button_frame, text=_("Copy RGB"), width=25,
+                       command=self.copy_rgb).pack(side="right", padx=10)
+            ttk.Button(button_frame, text=_("Close"),
+                       command=self.destroy).pack(side="right", padx=10)
         # --- placement
         bar.grid(row=0, column=0, padx=10, pady=(10, 4), sticky='n')
         square.grid(row=1, column=0, padx=10, pady=(9, 0), sticky='n')
@@ -315,7 +354,8 @@ class ColorPicker(tk.Toplevel):
         self.hexa.focus_set()
         self.wait_visibility()
         self.lift()
-        #self.grab_set()  # run 'modeless' so one can leave the colorpicker open
+        if not self.modeless:
+            self.grab_set()
 
     def get_color(self):
         """Return selected color, return an empty string if no color is selected."""
@@ -542,6 +582,22 @@ class ColorPicker(tk.Toplevel):
         self.color = rgb, hsv, hexa
         self.destroy()
 
+    def copy_hex(self):
+        rgb, hsv, hexa = self.square.get()
+        pyperclip.copy(hexa)
+
+    def copy_rgb(self):
+        rgb, hsv, hexa = self.square.get()
+        pyperclip.copy("{}, {}, {}".format(*rgb))
+
+def modeless_colorpicker(color="red", parent=None, title=_("Color Chooser"), alpha=False):
+    """
+    Clipboard based ColorPicker, lets user "copy" selected color
+    in hex notation or as 'r, g, b', and always returns None
+    """
+    col = ColorPicker(parent, color, alpha, title, modeless=True)
+    col.wait_window(col)
+    return None
 
 def askcolor(color="red", parent=None, title=_("Color Chooser"), alpha=False):
     """
